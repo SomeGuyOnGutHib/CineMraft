@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CineMraft</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: monospace;
+      color: #fff;
+    }
+
+    #game-container {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* START SCREEN */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(#87ceeb, #6bb3e0);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    #title-wrapper {
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    #title-text {
+      font-size: 64px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      padding: 12px 24px;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #777,
+          #777 6px,
+          #999 6px,
+          #999 12px
+        );
+      color: #f0f0f0;
+      text-shadow:
+        3px 3px 0 #222,
+        0 0 8px #000;
+      border: 4px solid #555;
+      box-shadow:
+        0 0 0 4px #333,
+        0 8px 0 #222,
+        0 12px 15px rgba(0,0,0,0.7);
+      font-family: "Trebuchet MS", sans-serif;
+    }
+
+    #title-text span {
+      display: inline-block;
+      transform: translateY(-2px) rotate(-2deg);
+    }
+
+    #title-text span:nth-child(2n) {
+      transform: translateY(2px) rotate(1deg);
+    }
+
+    #splash {
+      position: absolute;
+      right: -80px;
+      top: 8px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      background: #ffd600;
+      color: #222;
+      box-shadow: 0 0 6px rgba(0,0,0,0.7);
+      transform-origin: center;
+      animation: splashBounce 2.2s ease-in-out infinite;
+    }
+
+    @keyframes splashBounce {
+      0%   { transform: rotate(-18deg) scale(1); }
+      50%  { transform: rotate(-18deg) scale(1.06); }
+      100% { transform: rotate(-18deg) scale(1); }
+    }
+
+    #start-panel {
+      background: rgba(0,0,0,0.6);
+      padding: 12px 18px;
+      border: 2px solid #333;
+      box-shadow: 0 0 12px #000;
+      min-width: 260px;
+    }
+
+    #start-panel label {
+      display: block;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    #start-panel input[type="range"] {
+      width: 100%;
+    }
+
+    #play-button {
+      margin-top: 12px;
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      font-family: monospace;
+      cursor: pointer;
+      background: linear-gradient(#6bbf4c, #4a8f32);
+      border: 2px solid #2f5b1f;
+      color: #fff;
+      text-shadow: 1px 1px 0 #000;
+      box-shadow: 0 3px 0 #244116, 0 6px 8px rgba(0,0,0,0.7);
+    }
+
+    #play-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #244116, 0 3px 4px rgba(0,0,0,0.7);
+    }
+
+    /* HUD */
+    #hud {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 8px;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 2px solid #333;
+      text-shadow: 1px 1px 0 #000;
+      z-index: 5;
+    }
+
+    /* Health bar centered above hotbar */
+    #healthbar {
+      position: fixed;
+      bottom: 80px; /* above hotbar */
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      z-index: 5;
+    }
+
+    .heart {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      background: #300;
+      border: 1px solid #900;
+      box-shadow: 0 0 3px #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .heart-fill {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background: #f00;
+      height: 100%;
+    }
+
+    /* Selected text moved up a bit so it doesn't collide */
+    #selected-info {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 2px 6px;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #333;
+      text-shadow: 1px 1px 0 #000;
+      z-index: 5;
+    }
+
+    #hotbar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      border: 3px solid #333;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #555,
+          #555 6px,
+          #666 6px,
+          #666 12px
+        );
+      box-shadow: 0 0 10px #000;
+      z-index: 5;
+    }
+
+    .hotbar-slot {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #222;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #777,
+          #777 4px,
+          #888 4px,
+          #888 8px
+        );
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #fff;
+      text-shadow: 1px 1px 0 #000;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .hotbar-slot.selected {
+      border-color: #ffeb3b;
+      box-shadow: 0 0 8px #ffeb3b;
+    }
+
+    .slot-icon {
+      width: 18px;
+      height: 18px;
+      border: 1px solid #000;
+      box-sizing: border-box;
+      margin-bottom: 2px;
+    }
+
+    .slot-count {
+      font-size: 11px;
+    }
+
+    #chat-container {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 140px;
+      padding: 4px 8px;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #chat-log {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .chat-message {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 3px 6px;
+      margin-bottom: 1px;
+      border-radius: 0;
+      border: 1px solid #333;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+      opacity: 1;
+      transition: opacity 0.5s linear;
+    }
+
+    #chat-input-wrapper {
+      display: none;
+      pointer-events: auto;
+    }
+
+    #chat-input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      padding: 6px;
+      font-size: 14px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.7);
+      border-top: 2px solid #444;
+      box-sizing: border-box;
+    }
+
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #crosshair:before,
+    #crosshair:after {
+      content: "";
+      position: absolute;
+      background: #fff;
+    }
+
+    #crosshair:before {
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 10px;
+      transform: translateX(-50%);
+    }
+
+    #crosshair:after {
+      top: 50%;
+      left: 0;
+      width: 10px;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+
+    #lock-hint {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 12px;
+      border: 2px solid #444;
+      font-size: 13px;
+      text-align: center;
+      text-shadow: 1px 1px 0 #000;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
+
+    #settings {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid #444;
+      padding: 10px 14px;
+      font-size: 13px;
+      min-width: 260px;
+      display: none;
+      box-shadow: 0 0 12px #000;
+      z-index: 20;
+    }
+
+    #settings h2 {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #555;
+      padding-bottom: 4px;
+    }
+
+    #settings label {
+      display: block;
+      margin-top: 6px;
+    }
+
+    #settings input[type="range"],
+    #settings input[type="text"] {
+      width: 100%;
+    }
+
+    #settings .hint {
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 3px;
+    }
+
+    #inventory {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #444;
+      padding: 10px;
+      font-size: 13px;
+      min-width: 460px;
+      min-height: 260px;
+      display: none;
+      box-shadow: 0 0 12px #000;
+      z-index: 15;
+    }
+
+    #inventory h2 {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #555;
+      padding-bottom: 4px;
+    }
+
+    #inventory-layout {
+      display: flex;
+      margin-top: 6px;
+    }
+
+    #inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 60px);
+      grid-auto-rows: 60px;
+      gap: 4px;
+    }
+
+    .inv-slot {
+      border: 2px solid #222;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #555,
+          #555 4px,
+          #666 4px,
+          #666 8px
+        );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      text-shadow: 1px 1px 0 #000;
+      cursor: pointer;
+    }
+
+    .inv-icon {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #000;
+      box-sizing: border-box;
+      margin-bottom: 2px;
+    }
+
+    .inv-count {
+      font-size: 11px;
+    }
+
+    #inventory-right {
+      flex: 1;
+      margin-left: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #char-view {
+      width: 100px;
+      height: 140px;
+      border: 2px solid #333;
+      background: #222;
+      position: relative;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    #char-body {
+      position: absolute;
+      width: 40px;
+      height: 80px;
+      background: #2f5fdd;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transform-origin: 50% 50%;
+    }
+
+    #char-head {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #f2c295;
+      left: 50%;
+      top: calc(50% - 60px);
+      transform: translateX(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    #char-eye-left,
+    #char-eye-right {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #000;
+      top: 10px;
+    }
+
+    #char-eye-left {
+      left: 8px;
+    }
+
+    #char-eye-right {
+      right: 8px;
+    }
+
+    #crafting {
+      width: 100%;
+      font-size: 12px;
+    }
+
+    #crafting button {
+      width: 100%;
+      margin-top: 4px;
+      padding: 2px;
+      font-family: monospace;
+      font-size: 12px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+      border: 1px solid #666;
+    }
+
+    #crafting button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <div id="title-wrapper">
+      <div id="title-text">
+        <span>C</span><span>i</span><span>n</span><span>e</span><span>M</span><span>r</span><span>a</span><span>f</span><span>t</span>
+      </div>
+      <div id="splash">Copilot Was Here</div>
+    </div>
+    <div id="start-panel">
+      <label>
+        Render distance: <span id="start-render-value">40</span>
+        <input id="start-render-slider" type="range" min="6" max="80" value="40" />
+      </label>
+      <button id="play-button">Play</button>
+    </div>
+  </div>
+
+  <!-- HUD / UI -->
+  <div id="hud">
+    W A S D: move<br>
+    Mouse: look (click to lock)<br>
+    Left: break / attack, Right: place<br>
+    1–9: select hotbar slot<br>
+    Space: jump, T: chat, E: inventory, +: settings
+  </div>
+
+  <div id="healthbar"></div>
+  <div id="selected-info">Selected: none (x0)</div>
+  <div id="hotbar"></div>
+
+  <div id="chat-container">
+    <div id="chat-log"></div>
+    <div id="chat-input-wrapper">
+      <input id="chat-input" type="text" placeholder="Type message..." />
+    </div>
+  </div>
+
+  <div id="crosshair"></div>
+  <div id="lock-hint">Click to lock mouse</div>
+
+  <div id="settings">
+    <h2>Settings</h2>
+    <label>
+      Username:
+      <input id="username-input" type="text" maxlength="16" value="Player" />
+    </label>
+    <div class="hint">Used in chat messages.</div>
+
+    <label>
+      Render distance: <span id="render-distance-value"></span>
+      <input id="render-distance" type="range" min="6" max="80" value="40" />
+    </label>
+    <div class="hint">Blocks farther than this are hidden.</div>
+
+    <label>
+      Chat lifetime: <span id="chat-lifetime-value"></span>s
+      <input id="chat-lifetime" type="range" min="1" max="10" value="3" />
+    </label>
+    <div class="hint">How long chat messages stay visible.</div>
+
+    <div class="hint" style="margin-top:8px;">Press + again to close this menu.</div>
+  </div>
+
+  <div id="inventory">
+    <h2>Inventory</h2>
+    <div id="inventory-layout">
+      <div id="inventory-grid"></div>
+      <div id="inventory-right">
+        <div id="char-view">
+          <div id="char-body"></div>
+          <div id="char-head">
+            <div id="char-eye-left"></div>
+            <div id="char-eye-right"></div>
+          </div>
+        </div>
+        <div id="crafting">
+          <div>Crafting:</div>
+          <button id="craft-logs-to-planks">Wood → Planks (1 → 4)</button>
+          <button id="craft-planks-to-table">Planks → Crafting Table (4 → 1)</button>
+          <button id="craft-planks-to-sticks">Planks → Sticks (2 → 4)</button>
+          <button id="craft-stone-tools">Sticks + Stone → Stone Tools</button>
+          <button id="craft-iron-tools">Sticks + Iron → Iron Tools</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    const container = document.getElementById('game-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 6, 15);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // Start screen controls
+    const startScreen = document.getElementById('start-screen');
+    const startRenderSlider = document.getElementById('start-render-slider');
+    const startRenderValue = document.getElementById('start-render-value');
+    const playButton = document.getElementById('play-button');
+
+    // Random splash text
+    const splashTexts = [
+      "Copilot Was Here",
+      "Notch is jealous",
+      "can man 18",
+      "Technoblade never dies"
+    ];
+    document.getElementById("splash").textContent =
+      splashTexts[Math.floor(Math.random() * splashTexts.length)];
+
+    startRenderSlider.addEventListener('input', () => {
+      startRenderValue.textContent = startRenderSlider.value;
+    });
+
+    // Health
+    const healthbar = document.getElementById('healthbar');
+    const MAX_HEALTH = 20;
+    let currentHealth = MAX_HEALTH;
+
+    function createHearts() {
+      healthbar.innerHTML = '';
+      for (let i = 0; i < MAX_HEALTH / 2; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        const fill = document.createElement('div');
+        fill.className = 'heart-fill';
+        heart.appendChild(fill);
+        healthbar.appendChild(heart);
+      }
+    }
+
+    function updateHealthBar() {
+      const hearts = healthbar.querySelectorAll('.heart-fill');
+      let health = currentHealth;
+      hearts.forEach(h => {
+        if (health >= 2) {
+          h.style.height = '100%';
+          health -= 2;
+        } else if (health === 1) {
+          h.style.height = '50%';
+          health -= 1;
+        } else {
+          h.style.height = '0%';
+        }
+      });
+    }
+
+    function damagePlayer(amount) {
+      currentHealth = Math.max(0, currentHealth - amount);
+      updateHealthBar();
+      if (currentHealth === 0) {
+        addChatMessage('You died.');
+        currentHealth = MAX_HEALTH;
+        camera.position.set(0, 30, 0);
+        verticalPos = 30;
+        updateHealthBar();
+      }
+    }
+
+    createHearts();
+    updateHealthBar();
+
+    // Textures
+    function createBlockTexture(c1, c2) {
+      const size = 32;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const isAlt = ((x >> 2) + (y >> 2)) % 2 === 0;
+          ctx.fillStyle = isAlt ? c1 : c2;
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestMipMapNearestFilter;
+      return texture;
+    }
+
+    const textures = {
+      grass: createBlockTexture('#3b7a2a', '#2f5f21'),
+      dirt: createBlockTexture('#7a5a3b', '#5e452c'),
+      stone: createBlockTexture('#777777', '#8b8b8b'),
+      wood: createBlockTexture('#8b5a2b', '#6b4019'),
+      leaves: createBlockTexture('#2f6622', '#3f7a2e'),
+      glass: createBlockTexture('#8fd0ff', '#b0e4ff'),
+      planks: createBlockTexture('#c89a5a', '#b07a3c'),
+      crafting_table: createBlockTexture('#b0753c', '#8b4f23'),
+      coal_ore: createBlockTexture('#555555', '#333333'),
+      iron_ore: createBlockTexture('#b8a18b', '#8b7a63'),
+      pig: createBlockTexture('#ffb0c0', '#ff98b0'),
+      bedrock: createBlockTexture('#2a2a2a', '#1a1a1a')
+    };
+
+    const blockMaterials = {
+      grass: new THREE.MeshLambertMaterial({ map: textures.grass }),
+      dirt: new THREE.MeshLambertMaterial({ map: textures.dirt }),
+      stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
+      wood: new THREE.MeshLambertMaterial({ map: textures.wood }),
+      leaves: new THREE.MeshLambertMaterial({ map: textures.leaves, transparent: true, opacity: 0.9 }),
+      glass: new THREE.MeshLambertMaterial({ map: textures.glass, transparent: true, opacity: 0.6 }),
+      planks: new THREE.MeshLambertMaterial({ map: textures.planks }),
+      crafting_table: new THREE.MeshLambertMaterial({ map: textures.crafting_table }),
+      coal_ore: new THREE.MeshLambertMaterial({ map: textures.coal_ore }),
+      iron_ore: new THREE.MeshLambertMaterial({ map: textures.iron_ore }),
+      bedrock: new THREE.MeshLambertMaterial({ map: textures.bedrock })
+    };
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    const blockSize = 1;
+    const blocks = new Map();
+    const WORLD_SIZE = 24;
+    const MAX_WORLD_HEIGHT = 40;
+    const BEDROCK_Y = -16;
+
+    function makeKey(x, y, z) {
+      return `${x},${y},${z}`;
+    }
+
+    function addBlock(x, y, z, type) {
+      const key = makeKey(x, y, z);
+      if (blocks.has(key)) return;
+      const geo = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+      const mat = blockMaterials[type] || blockMaterials.dirt;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+      mesh.userData = { type, isBlock: true };
+      scene.add(mesh);
+      blocks.set(key, mesh);
+    }
+
+    function getBlock(x, y, z) {
+      return blocks.get(makeKey(x, y, z));
+    }
+
+    function removeBlock(x, y, z) {
+      const key = makeKey(x, y, z);
+      const mesh = blocks.get(key);
+      if (!mesh) return;
+      if (mesh.userData.type === 'bedrock') return;
+      scene.remove(mesh);
+      blocks.delete(key);
+    }
+
+    function baseHeightFormula(x, z) {
+      const h =
+        Math.sin(x * 0.25) * 1.5 +
+        Math.cos(z * 0.25) * 1.3 +
+        Math.sin((x + z) * 0.18) * 1.0;
+      return Math.max(0, Math.round(h + 6));
+    }
+
+    // World gen
+    for (let x = -WORLD_SIZE; x <= WORLD_SIZE; x++) {
+      for (let z = -WORLD_SIZE; z <= WORLD_SIZE; z++) {
+        addBlock(x, BEDROCK_Y, z, 'bedrock');
+        const h = baseHeightFormula(x, z);
+        for (let y = 0; y <= h; y++) {
+          let type = 'dirt';
+          if (y === h) type = 'grass';
+          else if (y < h - 2) {
+            const depth = h - y;
+            if (depth > 3 && depth < 12 && Math.random() < 0.08) type = 'coal_ore';
+            else if (depth >= 12 && depth < 20 && Math.random() < 0.05) type = 'iron_ore';
+            else type = 'stone';
+          }
+          addBlock(x, y, z, type);
+        }
+        for (let y = BEDROCK_Y + 1; y < 0; y++) {
+          if (Math.random() < 0.05) addBlock(x, y, z, 'coal_ore');
+          else if (Math.random() < 0.03) addBlock(x, y, z, 'iron_ore');
+          else addBlock(x, y, z, 'stone');
+        }
+      }
+    }
+
+    function getTopBlockY(x, z) {
+      let topY = BEDROCK_Y;
+      for (let y = BEDROCK_Y; y <= MAX_WORLD_HEIGHT; y++) {
+        if (getBlock(x, y, z)) topY = y;
+      }
+      return topY;
+    }
+
+    function placeTree(baseX, baseZ) {
+      const h = baseHeightFormula(baseX, baseZ);
+      const trunkHeight = 4;
+      for (let y = h + 1; y <= h + trunkHeight; y++) addBlock(baseX, y, baseZ, 'wood');
+      const top = h + trunkHeight;
+      for (let x = -2; x <= 2; x++) {
+        for (let y = -2; y <= 2; y++) {
+          for (let z = -2; z <= 2; z++) {
+            const dist = Math.abs(x) + Math.abs(y) + Math.abs(z);
+            if (dist <= 3) addBlock(baseX + x, top + y, baseZ + z, 'leaves');
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < 20; i++) {
+      const x = Math.floor((Math.random() - 0.5) * WORLD_SIZE * 1.5);
+      const z = Math.floor((Math.random() - 0.5) * WORLD_SIZE * 1.5);
+      if (baseHeightFormula(x, z) > 1) placeTree(x, z);
+    }
+
+    // Movement + pointer lock
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      if (e.target === chatInput && chatInputWrapper.style.display === 'block') return;
+      keys[e.code] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    let yaw = Math.PI;
+    let pitch = 0;
+    const maxPitch = Math.PI / 2 - 0.1;
+
+    function updateCameraDirection() {
+      const dir = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+      );
+      camera.lookAt(camera.position.clone().add(dir));
+    }
+
+    const lockHint = document.getElementById('lock-hint');
+
+    function isPointerLocked() {
+      return document.pointerLockElement === renderer.domElement;
+    }
+
+    renderer.domElement.addEventListener('click', () => {
+      if (!chatOpen && !settingsOpen && !inventoryOpen && !isPointerLocked() && !startScreenActive) {
+        renderer.domElement.requestPointerLock();
+      }
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      lockHint.style.display = isPointerLocked() ? 'none' : 'block';
+    });
+
+    const armBasePos = new THREE.Vector3(0.7, -0.8, -1.1);
+    let swayX = 0;
+    let swayY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isPointerLocked()) return;
+      if (chatOpen || settingsOpen || inventoryOpen) return;
+      const sensitivity = 0.0022;
+      yaw -= e.movementX * sensitivity;
+      pitch -= e.movementY * sensitivity;
+      pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+
+      const swayAmount = 0.03;
+      swayX += e.movementX * swayAmount * 0.01;
+      swayY += e.movementY * swayAmount * 0.01;
+      swayX = Math.max(-0.15, Math.min(0.15, swayX));
+      swayY = Math.max(-0.15, Math.min(0.15, swayY));
+    });
+
+    const moveSpeed = 4;
+    let verticalPos = 7;
+    let verticalVel = 0;
+    const gravity = -16;
+    const jumpVel = 7;
+    let onGround = false;
+
+    const raycaster = new THREE.Raycaster();
+    function getTargetBlock(maxDistance = 8) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(Array.from(blocks.values()));
+      for (const hit of intersects) {
+        if (!hit.object.visible) continue;
+        if (hit.distance <= maxDistance) {
+          const pos = hit.object.position.clone().subScalar(0.5);
+          const bx = Math.floor(pos.x);
+          const by = Math.floor(pos.y);
+          const bz = Math.floor(pos.z);
+          return { x: bx, y: by, z: bz, face: hit.face.normal.clone(), mesh: hit.object };
+        }
+      }
+      return null;
+    }
+
+    // Pigs
+    const pigs = [];
+    const pigMatNormal = new THREE.MeshLambertMaterial({ map: textures.pig });
+    const pigMatAngry = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+
+    function spawnPig(x, y, z) {
+      const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+      const mesh = new THREE.Mesh(geo, pigMatNormal.clone());
+      mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+      mesh.userData = {
+        type: 'pig',
+        health: 6,
+        angry: false,
+        invulnerableTime: 0,
+        velocityY: 0,
+        wanderAngle: Math.random() * Math.PI * 2,
+        attackCooldown: 0
+      };
+      scene.add(mesh);
+      pigs.push(mesh);
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const x = Math.floor((Math.random() - 0.5) * WORLD_SIZE * 1.5);
+      const z = Math.floor((Math.random() - 0.5) * WORLD_SIZE * 1.5);
+      const h = baseHeightFormula(x, z);
+      spawnPig(x, h + 1, z);
+    }
+
+    function raycastPigs(maxDistance = 8) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(pigs);
+      for (const hit of intersects) {
+        if (hit.distance <= maxDistance) return { mesh: hit.object, distance: hit.distance };
+      }
+      return null;
+    }
+
+    function damagePig(pig, amount) {
+      const d = pig.userData;
+      if (d.invulnerableTime > 0) return;
+      d.health -= amount;
+      d.invulnerableTime = 0.2;
+      d.angry = true;
+      pig.material = pigMatAngry;
+      d.velocityY = 3;
+
+      if (d.health <= 0) {
+        scene.remove(pig);
+        const idx = pigs.indexOf(pig);
+        if (idx !== -1) pigs.splice(idx, 1);
+        addChatMessage('Pig died.');
+      }
+    }
+
+    // Inventory
+    const allTypes = [
+      'grass', 'dirt', 'stone', 'coal_ore', 'iron_ore',
+      'wood', 'leaves', 'glass', 'planks', 'crafting_table',
+      'sticks',
+      'stone_pickaxe', 'stone_axe', 'stone_shovel', 'stone_sword',
+      'iron_pickaxe', 'iron_axe', 'iron_shovel', 'iron_sword'
+    ];
+    const inventory = {};
+    allTypes.forEach(t => inventory[t] = 0);
+
+    const hotbarDiv = document.getElementById('hotbar');
+    const selectedInfo = document.getElementById('selected-info');
+    const HOTBAR_SIZE = 9;
+    const hotbarSlots = new Array(HOTBAR_SIZE).fill(null);
+    let selectedSlotIndex = 0;
+
+    function colorForItem(type) {
+      switch (type) {
+        case 'grass': return '#3b7a2a';
+        case 'dirt': return '#7a5a3b';
+        case 'stone': return '#777777';
+        case 'coal_ore': return '#333333';
+        case 'iron_ore': return '#b8a18b';
+        case 'wood': return '#8b5a2b';
+        case 'leaves': return '#2f6622';
+        case 'glass': return '#8fd0ff';
+        case 'planks': return '#c89a5a';
+        case 'crafting_table': return '#b0753c';
+        case 'sticks': return '#d2b48c';
+        case 'stone_pickaxe':
+        case 'stone_axe':
+        case 'stone_shovel':
+        case 'stone_sword': return '#999999';
+        case 'iron_pickaxe':
+        case 'iron_axe':
+        case 'iron_shovel':
+        case 'iron_sword': return '#e0e0e0';
+        default: return '#ffffff';
+      }
+    }
+
+    function isBlockType(type) {
+      return ['grass','dirt','stone','coal_ore','iron_ore','wood','leaves','glass','planks','crafting_table'].includes(type);
+    }
+
+    function ensureInHotbar(type) {
+      if (!type) return;
+      if (!allTypes.includes(type)) return;
+      if (hotbarSlots.includes(type)) return;
+      const emptyIndex = hotbarSlots.indexOf(null);
+      if (emptyIndex !== -1) hotbarSlots[emptyIndex] = type;
+    }
+
+    function getSelectedItemType() {
+      const type = hotbarSlots[selectedSlotIndex];
+      if (!type) return null;
+      if ((inventory[type] || 0) <= 0) return null;
+      return type;
+    }
+
+    function renderHotbar() {
+      hotbarDiv.innerHTML = '';
+      for (let i = 0; i < HOTBAR_SIZE; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'hotbar-slot' + (i === selectedSlotIndex ? ' selected' : '');
+        slot.dataset.index = i;
+
+        const type = hotbarSlots[i];
+        const icon = document.createElement('div');
+        icon.className = 'slot-icon';
+        if (type && inventory[type] > 0) icon.style.background = colorForItem(type);
+        else icon.style.background = 'transparent';
+        slot.appendChild(icon);
+
+        const countDiv = document.createElement('div');
+        countDiv.className = 'slot-count';
+        if (type && inventory[type] > 0) countDiv.textContent = inventory[type];
+        else countDiv.textContent = '';
+        slot.appendChild(countDiv);
+
+        hotbarDiv.appendChild(slot);
+      }
+
+      const selType = getSelectedItemType();
+      if (selType) selectedInfo.textContent = `Selected: ${selType} (x${inventory[selType]})`;
+      else selectedInfo.textContent = 'Selected: none (x0)';
+    }
+
+    // click hotbar: remove item from slot (stays in inventory)
+    hotbarDiv.addEventListener('click', (e) => {
+      const slotEl = e.target.closest('.hotbar-slot');
+      if (!slotEl) return;
+      const index = parseInt(slotEl.dataset.index, 10);
+      const type = hotbarSlots[index];
+      if (!type) return;
+      hotbarSlots[index] = null;
+      if (selectedSlotIndex === index) selectedSlotIndex = 0;
+      renderHotbar();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (chatOpen || settingsOpen || inventoryOpen || startScreenActive) return;
+      if (e.code.startsWith('Digit')) {
+        const num = parseInt(e.code.slice(5), 10);
+        if (num >= 1 && num <= HOTBAR_SIZE) {
+          selectedSlotIndex = num - 1;
+          renderHotbar();
+        }
+      }
+      if (e.code === 'Space') {
+        if (onGround) {
+          verticalVel = jumpVel;
+          onGround = false;
+        }
+      }
+    });
+
+    renderHotbar();
+
+    // Arm
+    const armGeo = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+    const armCanvas = document.createElement('canvas');
+    armCanvas.width = armCanvas.height = 32;
+    const armCtx = armCanvas.getContext('2d');
+    for (let y = 0; y < 32; y++) {
+      for (let x = 0; x < 32; x++) {
+        armCtx.fillStyle = y < 16 ? '#f2c295' : '#2f5fdd';
+        armCtx.fillRect(x, y, 1, 1);
+      }
+    }
+    const armTex = new THREE.CanvasTexture(armCanvas);
+    armTex.magFilter = THREE.NearestFilter;
+    armTex.minFilter = THREE.NearestMipMapNearestFilter;
+    const armMat = new THREE.MeshLambertMaterial({ map: armTex });
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.position.copy(armBasePos);
+    arm.rotation.set(-0.8, -0.7, 0.3);
+    camera.add(arm);
+    scene.add(camera);
+
+    let armSwing = 0;
+    let armSwingSpeed = 0;
+    function triggerArmSwing(force = 0.5) {
+      armSwingSpeed = force;
+    }
+    function updateArm(delta) {
+      if (armSwingSpeed > 0) {
+        armSwing += armSwingSpeed;
+        arm.rotation.x = -0.8 + Math.sin(armSwing) * 0.8;
+        armSwingSpeed *= 0.84;
+        if (armSwingSpeed < 0.02) {
+          armSwingSpeed = 0;
+          armSwing = 0;
+          arm.rotation.x = -0.8;
+        }
+      }
+    }
+
+    // Chat + settings
+    const chatLog = document.getElementById('chat-log');
+    const chatInputWrapper = document.getElementById('chat-input-wrapper');
+    const chatInput = document.getElementById('chat-input');
+    let chatOpen = false;
+
+    const settingsDiv = document.getElementById('settings');
+    const renderDistanceSlider = document.getElementById('render-distance');
+    const renderDistanceValue = document.getElementById('render-distance-value');
+    const chatLifetimeSlider = document.getElementById('chat-lifetime');
+    const chatLifetimeValue = document.getElementById('chat-lifetime-value');
+    const usernameInput = document.getElementById('username-input');
+
+    let renderDistance = parseInt(renderDistanceSlider.value, 10);
+    let chatLifetime = parseInt(chatLifetimeSlider.value, 10);
+    let username = usernameInput.value || 'Player';
+    let settingsOpen = false;
+
+    renderDistanceValue.textContent = renderDistance;
+    chatLifetimeValue.textContent = chatLifetime;
+
+    renderDistanceSlider.addEventListener('input', () => {
+      renderDistance = parseInt(renderDistanceSlider.value, 10);
+      renderDistanceValue.textContent = renderDistance;
+    });
+
+    chatLifetimeSlider.addEventListener('input', () => {
+      chatLifetime = parseInt(chatLifetimeSlider.value, 10);
+      chatLifetimeValue.textContent = chatLifetime;
+    });
+
+    usernameInput.addEventListener('input', () => {
+      username = usernameInput.value.trim() || 'Player';
+    });
+
+    function addChatMessage(text) {
+      const msg = document.createElement('div');
+      msg.className = 'chat-message';
+      msg.textContent = `${username}: ${text}`;
+      chatLog.appendChild(msg);
+      chatLog.scrollTop = chatLog.scrollHeight;
+      const lifetime = chatLifetime;
+      setTimeout(() => {
+        if (msg.parentNode === chatLog) {
+          msg.style.opacity = '0';
+          setTimeout(() => {
+            if (msg.parentNode === chatLog) chatLog.removeChild(msg);
+          }, 500);
+        }
+      }, lifetime * 1000);
+    }
+
+    function openChat() {
+      chatOpen = true;
+      chatInputWrapper.style.display = 'block';
+      chatInput.value = '';
+      chatInput.focus();
+      if (isPointerLocked()) document.exitPointerLock();
+    }
+
+    function closeChat() {
+      chatOpen = false;
+      chatInputWrapper.style.display = 'none';
+      window.focus();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyT' && !chatOpen && !settingsOpen && !inventoryOpen && !startScreenActive) {
+        e.preventDefault();
+        openChat();
+      } else if (chatOpen && e.code === 'Escape') {
+        e.preventDefault();
+        closeChat();
+      }
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (text) addChatMessage(text);
+        closeChat();
+      }
+    });
+
+    function toggleSettings() {
+      settingsOpen = !settingsOpen;
+      settingsDiv.style.display = settingsOpen ? 'block' : 'none';
+      if (settingsOpen && isPointerLocked()) document.exitPointerLock();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '+' || e.code === 'Equal' || e.code === 'NumpadAdd') {
+        e.preventDefault();
+        toggleSettings();
+      }
+    });
+
+    // Inventory UI + crafting
+    const inventoryDiv = document.getElementById('inventory');
+    const inventoryGrid = document.getElementById('inventory-grid');
+    let inventoryOpen = false;
+
+    function openInventory() {
+      inventoryOpen = true;
+      inventoryDiv.style.display = 'block';
+      if (isPointerLocked()) document.exitPointerLock();
+      renderInventoryUI();
+      updateCraftingButtons();
+    }
+
+    function closeInventory() {
+      inventoryOpen = false;
+      inventoryDiv.style.display = 'none';
+    }
+
+    function toggleInventory() {
+      if (inventoryOpen) closeInventory();
+      else openInventory();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyE' && !chatOpen && !settingsOpen && !startScreenActive) {
+        e.preventDefault();
+        toggleInventory();
+      } else if (inventoryOpen && e.code === 'Escape') {
+        e.preventDefault();
+        closeInventory();
+      }
+    });
+
+    function renderInventoryUI() {
+      inventoryGrid.innerHTML = '';
+      allTypes.forEach(type => {
+        const count = inventory[type] || 0;
+        if (count <= 0) return;
+        const slot = document.createElement('div');
+        slot.className = 'inv-slot';
+        slot.dataset.item = type;
+
+        const icon = document.createElement('div');
+        icon.className = 'inv-icon';
+        icon.style.background = colorForItem(type);
+        slot.appendChild(icon);
+
+        const label = document.createElement('div');
+        label.textContent = type;
+        slot.appendChild(label);
+
+        const c = document.createElement('div');
+        c.className = 'inv-count';
+        c.textContent = 'x' + count;
+        slot.appendChild(c);
+
+        inventoryGrid.appendChild(slot);
+      });
+    }
+
+    // Inventory click → move item to hotbar
+    inventoryGrid.addEventListener('click', (e) => {
+      const slotEl = e.target.closest('.inv-slot');
+      if (!slotEl) return;
+      const type = slotEl.dataset.item;
+      if (!type) return;
+      if (inventory[type] <= 0) return;
+      if (!hotbarSlots.includes(type)) {
+        const emptyIndex = hotbarSlots.indexOf(null);
+        if (emptyIndex !== -1) hotbarSlots[emptyIndex] = type;
+      }
+      renderHotbar();
+      renderInventoryUI();
+    });
+
+    const charView = document.getElementById('char-view');
+    const charBody = document.getElementById('char-body');
+    const charHead = document.getElementById('char-head');
+
+    charView.addEventListener('mousemove', (e) => {
+      const rect = charView.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / rect.width;
+      const dy = (e.clientY - cy) / rect.height;
+      const rotY = dx * 30;
+      const rotX = -dy * 10;
+      charBody.style.transform = `translate(-50%, -50%) rotateY(${rotY}deg)`;
+      charHead.style.transform = `translateX(-50%) rotateY(${rotY * 1.2}deg) rotateX(${rotX}deg)`;
+    });
+
+    const craftLogsToPlanksBtn = document.getElementById('craft-logs-to-planks');
+    const craftPlanksToTableBtn = document.getElementById('craft-planks-to-table');
+    const craftPlanksToSticksBtn = document.getElementById('craft-planks-to-sticks');
+    const craftStoneToolsBtn = document.getElementById('craft-stone-tools');
+    const craftIronToolsBtn = document.getElementById('craft-iron-tools');
+
+    function updateCraftingButtons() {
+      craftLogsToPlanksBtn.disabled = (inventory['wood'] || 0) < 1;
+      craftPlanksToTableBtn.disabled = (inventory['planks'] || 0) < 4;
+      craftPlanksToSticksBtn.disabled = (inventory['planks'] || 0) < 2;
+      craftStoneToolsBtn.disabled = (inventory['sticks'] || 0) < 4 || (inventory['stone'] || 0) < 8;
+      craftIronToolsBtn.disabled = (inventory['sticks'] || 0) < 4 || (inventory['iron_ore'] || 0) < 8;
+    }
+
+    craftLogsToPlanksBtn.addEventListener('click', () => {
+      if (inventory['wood'] >= 1) {
+        inventory['wood'] -= 1;
+        inventory['planks'] += 4;
+        ensureInHotbar('planks');
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+      }
+    });
+
+    craftPlanksToTableBtn.addEventListener('click', () => {
+      if (inventory['planks'] >= 4) {
+        inventory['planks'] -= 4;
+        inventory['crafting_table'] += 1;
+        ensureInHotbar('crafting_table');
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+      }
+    });
+
+    craftPlanksToSticksBtn.addEventListener('click', () => {
+      if (inventory['planks'] >= 2) {
+        inventory['planks'] -= 2;
+        inventory['sticks'] += 4;
+        ensureInHotbar('sticks');
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+      }
+    });
+
+    craftStoneToolsBtn.addEventListener('click', () => {
+      if (inventory['sticks'] >= 4 && inventory['stone'] >= 8) {
+        inventory['sticks'] -= 4;
+        inventory['stone'] -= 8;
+        ['stone_pickaxe','stone_axe','stone_shovel','stone_sword'].forEach(t => {
+          inventory[t] += 1;
+          ensureInHotbar(t);
+        });
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+      }
+    });
+
+    craftIronToolsBtn.addEventListener('click', () => {
+      if (inventory['sticks'] >= 4 && inventory['iron_ore'] >= 8) {
+        inventory['sticks'] -= 4;
+        inventory['iron_ore'] -= 8;
+        ['iron_pickaxe','iron_axe','iron_shovel','iron_sword'].forEach(t => {
+          inventory[t] += 1;
+          ensureInHotbar(t);
+        });
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+      }
+    });
+
+    // Breaking / attacking
+    let leftMouseDown = false;
+    let breakTargetKey = null;
+    let breakProgress = 0;
+    const breakTime = 0.6;
+
+    renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    function getToolDamage(type) {
+      if (!type) return 1;
+      if (type.endsWith('sword')) {
+        if (type.startsWith('iron')) return 4;
+        if (type.startsWith('stone')) return 3;
+      }
+      if (type.startsWith('iron') || type.startsWith('stone')) return 2;
+      return 1;
+    }
+
+    renderer.domElement.addEventListener('mousedown', (e) => {
+      if (chatOpen || settingsOpen || inventoryOpen || startScreenActive) return;
+      if (!isPointerLocked()) return;
+
+      if (e.button === 0) {
+        leftMouseDown = true;
+        const pigHit = raycastPigs();
+        if (pigHit) {
+          const item = getSelectedItemType();
+          const dmg = getToolDamage(item);
+          damagePig(pigHit.mesh, dmg);
+          triggerArmSwing(0.9);
+          return;
+        }
+        const target = getTargetBlock();
+        if (target) {
+          breakTargetKey = makeKey(target.x, target.y, target.z);
+          breakProgress = 0;
+          triggerArmSwing(0.7);
+        } else {
+          breakTargetKey = null;
+        }
+      } else if (e.button === 2) {
+        const itemType = getSelectedItemType();
+        if (!itemType || !isBlockType(itemType)) return;
+        const target = getTargetBlock();
+        if (target && inventory[itemType] > 0) {
+          const placePos = new THREE.Vector3(target.x, target.y, target.z).add(target.face);
+          const bx = Math.floor(placePos.x + 0.01);
+          const by = Math.floor(placePos.y + 0.01);
+          const bz = Math.floor(placePos.z + 0.01);
+          addBlock(bx, by, bz, itemType);
+          inventory[itemType] -= 1;
+          triggerArmSwing(0.5);
+          renderHotbar();
+          renderInventoryUI();
+          updateCraftingButtons();
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (e.button === 0) {
+        leftMouseDown = false;
+        breakTargetKey = null;
+        breakProgress = 0;
+      }
+    });
+
+    function updateBreaking(delta) {
+      if (!leftMouseDown || !breakTargetKey) return;
+      const mesh = blocks.get(breakTargetKey);
+      if (!mesh) {
+        breakTargetKey = null;
+        breakProgress = 0;
+        return;
+      }
+      breakProgress += delta;
+      if (armSwingSpeed < 0.25) triggerArmSwing(0.35);
+      if (breakProgress >= breakTime) {
+        const type = mesh.userData.type;
+        removeBlock(mesh.position.x - 0.5, mesh.position.y - 0.5, mesh.position.z - 0.5);
+        if (allTypes.includes(type)) {
+          inventory[type] = (inventory[type] || 0) + 1;
+          ensureInHotbar(type);
+        }
+        renderHotbar();
+        renderInventoryUI();
+        updateCraftingButtons();
+        triggerArmSwing(0.8);
+        breakTargetKey = null;
+        breakProgress = 0;
+      }
+    }
+
+    // Pigs update (slower, face movement)
+    function updatePigs(delta) {
+      const playerPos = camera.position.clone();
+      pigs.forEach(pig => {
+        const d = pig.userData;
+        d.velocityY += gravity * delta * 0.4;
+        pig.position.y += d.velocityY * delta;
+
+        const px = Math.floor(pig.position.x - 0.5);
+        const pz = Math.floor(pig.position.z - 0.5);
+        const topY = getTopBlockY(px, pz);
+        const groundY = topY + 1;
+        if (pig.position.y < groundY + 0.45) {
+          pig.position.y = groundY + 0.45;
+          d.velocityY = 0;
+        }
+
+        if (d.invulnerableTime > 0) {
+          d.invulnerableTime -= delta;
+          if (d.invulnerableTime <= 0) {
+            d.invulnerableTime = 0;
+            pig.material = d.angry ? pigMatAngry : pigMatNormal;
+          }
+        }
+
+        if (d.attackCooldown > 0) d.attackCooldown -= delta;
+
+        const pig2D = new THREE.Vector2(pig.position.x, pig.position.z);
+        const player2D = new THREE.Vector2(playerPos.x, playerPos.z);
+        const dist2D = pig2D.distanceTo(player2D);
+
+        let moveDir = new THREE.Vector2(0, 0);
+
+        if (!d.angry) {
+          d.wanderAngle += delta * 0.3;
+          moveDir.set(Math.cos(d.wanderAngle), Math.sin(d.wanderAngle));
+          moveDir.multiplyScalar(0.8);
+        } else {
+          moveDir.copy(player2D.clone().sub(pig2D));
+          if (moveDir.lengthSq() > 0.0001) {
+            moveDir.normalize().multiplyScalar(2.2);
+          }
+          if (dist2D < 1.3 && d.attackCooldown <= 0) {
+            damagePlayer(2);
+            d.attackCooldown = 1.6;
+          }
+        }
+
+        pig.position.x += moveDir.x * delta;
+        pig.position.z += moveDir.y * delta;
+
+        if (moveDir.lengthSq() > 0.0001) {
+          const angle = Math.atan2(moveDir.x, moveDir.y);
+          pig.rotation.y = angle;
+        }
+      });
+    }
+
+    // Culling
+    function updateCulling(forwardVec) {
+      const maxDistSq = renderDistance * renderDistance;
+      const camPos = camera.position;
+      for (const mesh of blocks.values()) {
+        const dx = mesh.position.x - camPos.x;
+        const dy = mesh.position.y - camPos.y;
+        const dz = mesh.position.z - camPos.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+        if (distSq > maxDistSq) {
+          mesh.visible = false;
+          continue;
+        }
+        const len = Math.sqrt(distSq);
+        if (len === 0) {
+          mesh.visible = true;
+          continue;
+        }
+        const vx = dx / len;
+        const vy = dy / len;
+        const vz = dz / len;
+        const dot = vx * forwardVec.x + vy * forwardVec.y + vz * forwardVec.z;
+        mesh.visible = dot >= -0.3;
+      }
+    }
+
+    // Game loop
+    let lastTime = performance.now();
+    const forward = new THREE.Vector3();
+    const right = new THREE.Vector3();
+    let walkTime = 0;
+
+    let startScreenActive = true;
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const delta = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (!chatOpen && !settingsOpen && !inventoryOpen && !startScreenActive) {
+        camera.getWorldDirection(forward);
+        forward.normalize();
+        forward.y = 0;
+        forward.normalize();
+
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const moveDir = new THREE.Vector3();
+        if (keys['KeyW']) moveDir.add(forward);
+        if (keys['KeyS']) moveDir.sub(forward);
+        if (keys['KeyA']) moveDir.sub(right);
+        if (keys['KeyD']) moveDir.add(right);
+
+        const moving = moveDir.lengthSq() > 0;
+
+        if (moving) {
+          moveDir.normalize().multiplyScalar(moveSpeed * delta);
+
+          const oldPos = camera.position.clone();
+          const newPos = oldPos.clone().add(moveDir);
+
+          function isSolidAt(pos) {
+            const x = Math.floor(pos.x);
+            const z = Math.floor(pos.z);
+            const footY = Math.floor(pos.y - 2.0);
+            const headY = Math.floor(pos.y - 0.5);
+            return (
+              getBlock(x, footY, z) ||
+              getBlock(x, headY, z)
+            );
+          }
+
+          const tryX = oldPos.clone();
+          tryX.x = newPos.x;
+          if (!isSolidAt(tryX)) camera.position.x = newPos.x;
+
+          const tryZ = oldPos.clone();
+          tryZ.z = newPos.z;
+          if (!isSolidAt(tryZ)) camera.position.z = newPos.z;
+        }
+
+        verticalVel += gravity * delta;
+        verticalPos += verticalVel * delta;
+
+        const colX = Math.round(camera.position.x - 0.5);
+        const colZ = Math.round(camera.position.z - 0.5);
+        const topY = getTopBlockY(colX, colZ);
+        const baseGround = (topY >= BEDROCK_Y ? topY + 1 : BEDROCK_Y);
+        const eyeOffset = 2.5;
+        const groundHeight = baseGround + eyeOffset;
+
+        if (verticalPos <= groundHeight) {
+          verticalPos = groundHeight;
+          verticalVel = 0;
+          onGround = true;
+        } else {
+          onGround = false;
+        }
+
+        camera.position.y = verticalPos;
+        updateCameraDirection();
+
+        if (moving && onGround) {
+          walkTime += delta * 8;
+          const bobX = Math.sin(walkTime) * 0.15;
+          const bobY = Math.abs(Math.cos(walkTime)) * 0.1;
+          arm.position.x = armBasePos.x + bobX + swayX;
+          arm.position.y = armBasePos.y - bobY + swayY;
+        } else {
+          arm.position.x += ((armBasePos.x + swayX) - arm.position.x) * 0.1;
+          arm.position.y += ((armBasePos.y + swayY) - arm.position.y) * 0.1;
+        }
+
+        swayX += (0 - swayX) * 0.05;
+        swayY += (0 - swayY) * 0.05;
+      }
+
+      if (!startScreenActive) {
+        updateBreaking(delta);
+        updateArm(delta);
+        updatePigs(delta);
+
+        const camForward = new THREE.Vector3();
+        camera.getWorldDirection(camForward);
+        updateCulling(camForward);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    playButton.addEventListener('click', () => {
+      renderDistance = parseInt(startRenderSlider.value, 10);
+      renderDistanceSlider.value = renderDistance;
+      renderDistanceValue.textContent = renderDistance;
+      startScreen.style.display = 'none';
+      startScreenActive = false;
+      renderer.domElement.requestPointerLock();
+      lockHint.style.display = 'none';
+    });
+
+    updateCameraDirection();
+    animate(performance.now());
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
